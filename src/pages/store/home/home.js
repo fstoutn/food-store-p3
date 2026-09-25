@@ -17,6 +17,27 @@ const sortSelect = document.querySelector("#sort-select");
 const categoryList = document.querySelector(".category-list");
 const sidebar = document.querySelector("#sidebar");
 const sidebarToggle = document.querySelector("#sidebar-toggle");
+const cartButton = document.querySelector("#cart-button");
+const cartBadge = document.querySelector("#cart-badge");
+function getCartItemCount() {
+    const storedCart = localStorage.getItem("food_store_cart");
+    if (!storedCart) {
+        return 0;
+    }
+    try {
+        const items = JSON.parse(storedCart);
+        return items.reduce((total, item) => total + item.quantity, 0);
+    }
+    catch {
+        localStorage.removeItem("food_store_cart");
+        return 0;
+    }
+}
+function updateCartBadge() {
+    if (cartBadge) {
+        cartBadge.textContent = getCartItemCount().toString();
+    }
+}
 const fallbackCategories = [
     { id: 1, nombre: "Comidas", descripcion: "Platos principales", imagenUrl: "" },
     { id: 2, nombre: "Bebidas", descripcion: "Bebidas frías y calientes", imagenUrl: "" },
@@ -77,6 +98,10 @@ logoutButton?.addEventListener("click", () => {
 sidebarToggle?.addEventListener("click", () => {
     sidebar?.classList.toggle("open");
 });
+cartButton?.addEventListener("click", () => {
+    window.location.href = "../cart/cart.html";
+});
+updateCartBadge();
 async function loadCategories() {
     try {
         categories = await apiRequest("/categorias");

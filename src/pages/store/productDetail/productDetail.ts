@@ -2,6 +2,7 @@ import { apiRequest } from "../../../utils/api.js";
 import { requireRole } from "../../../utils/auth.js";
 import {
 addToCart,
+getCart,
 getCartItemCount
 } from "../cart/cart.js";
 import type { IProduct } from "../../../types/IProduct.js";
@@ -149,14 +150,31 @@ detailError.textContent = "";
 }
 }
 
+function getRemainingStock(): number {
+if (!product) {
+    return 0;
+}
+
+const cartQuantity = getCart().find(
+    (item) => item.product.id === product?.id
+)?.quantity ?? 0;
+
+return Math.max(
+    product.stock - cartQuantity,
+    0
+);
+}
+
 function updateQuantity(value: number): void {
 if (!quantityInput || !product) {
 return;
 }
 
+const remainingStock = getRemainingStock();
+
 const quantity = Math.max(
     1,
-    Math.min(value, product.stock)
+    Math.min(value, remainingStock)
 );
 
 quantityInput.value = quantity.toString();
@@ -235,8 +253,10 @@ if (productPrice) {
         `$${product.precio.toFixed(2)}`;
 }
 
+const remainingStock = getRemainingStock();
+
 const available =
-    product.activo && product.stock > 0;
+    product.activo && remainingStock > 0;
 
 if (productStatus) {
     productStatus.textContent =
@@ -254,14 +274,14 @@ if (productStatus) {
 
 if (productStock) {
     productStock.textContent =
-        product.stock > 0
-            ? `Stock disponible: ${product.stock}`
-            : "Sin stock";
+        remainingStock > 0
+            ? `Stock disponible: ${remainingStock}`
+            : "Ya agregaste todo el stock disponible";
 }
 
 if (quantityInput) {
     quantityInput.max =
-        product.stock.toString();
+        remainingStock.toString();
 
     quantityInput.disabled =
         !available;
@@ -321,14 +341,15 @@ return;
 
     const value =
         Number(quantityInput.value);
+    const remainingStock = getRemainingStock();
 
     if (
         !Number.isInteger(value) ||
         value < 1 ||
-        value > product.stock
+        value > remainingStock
     ) {
         showError(
-            `La cantidad debe estar entre 1 y ${product.stock}.`
+            `La cantidad disponible para agregar es ${remainingStock}.`
         );
 
         updateQuantity(1);
@@ -351,10 +372,11 @@ return;
 
     const quantity =
         Number(quantityInput.value);
+    const remainingStock = getRemainingStock();
 
     if (
         !product.activo ||
-        product.stock <= 0
+        remainingStock <= 0
     ) {
         showError(
             "Este producto no está disponible."
@@ -365,10 +387,10 @@ return;
     if (
         !Number.isInteger(quantity) ||
         quantity < 1 ||
-        quantity > product.stock
+        quantity > remainingStock
     ) {
         showError(
-            `La cantidad debe estar entre 1 y ${product.stock}.`
+            `Solo podés agregar hasta ${remainingStock} unidad${remainingStock === 1 ? "" : "es"}.`
         );
         return;
     }

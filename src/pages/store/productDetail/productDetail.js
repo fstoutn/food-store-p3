@@ -1,6 +1,6 @@
 import { apiRequest } from "../../../utils/api.js";
 import { requireRole } from "../../../utils/auth.js";
-import { addToCart, getCartItemCount } from "../cart/cart.js";
+import { addToCart, getCart, getCartItemCount } from "../cart/cart.js";
 requireRole("cliente");
 const productImage = document.querySelector("#product-image");
 const productName = document.querySelector("#product-name");
@@ -96,11 +96,19 @@ function clearError() {
         detailError.textContent = "";
     }
 }
+function getRemainingStock() {
+    if (!product) {
+        return 0;
+    }
+    const cartQuantity = getCart().find((item) => item.product.id === product?.id)?.quantity ?? 0;
+    return Math.max(product.stock - cartQuantity, 0);
+}
 function updateQuantity(value) {
     if (!quantityInput || !product) {
         return;
     }
-    const quantity = Math.max(1, Math.min(value, product.stock));
+    const remainingStock = getRemainingStock();
+    const quantity = Math.max(1, Math.min(value, remainingStock));
     quantityInput.value = quantity.toString();
 }
 async function loadProduct() {
@@ -149,7 +157,8 @@ function renderProduct() {
         productPrice.textContent =
             `$${product.precio.toFixed(2)}`;
     }
-    const available = product.activo && product.stock > 0;
+    const remainingStock = getRemainingStock();
+    const available = product.activo && remainingStock > 0;
     if (productStatus) {
         productStatus.textContent =
             available
@@ -162,13 +171,13 @@ function renderProduct() {
     }
     if (productStock) {
         productStock.textContent =
-            product.stock > 0
-                ? `Stock disponible: ${product.stock}`
-                : "Sin stock";
+            remainingStock > 0
+                ? `Stock disponible: ${remainingStock}`
+                : "Ya agregaste todo el stock disponible";
     }
     if (quantityInput) {
         quantityInput.max =
-            product.stock.toString();
+            remainingStock.toString();
         quantityInput.disabled =
             !available;
     }
@@ -202,10 +211,11 @@ quantityInput?.addEventListener("change", () => {
         return;
     }
     const value = Number(quantityInput.value);
+    const remainingStock = getRemainingStock();
     if (!Number.isInteger(value) ||
         value < 1 ||
-        value > product.stock) {
-        showError(`La cantidad debe estar entre 1 y ${product.stock}.`);
+        value > remainingStock) {
+        showError(`La cantidad disponible para agregar es ${remainingStock}.`);
         updateQuantity(1);
         return;
     }
@@ -217,15 +227,16 @@ addButton?.addEventListener("click", () => {
     }
     clearError();
     const quantity = Number(quantityInput.value);
+    const remainingStock = getRemainingStock();
     if (!product.activo ||
-        product.stock <= 0) {
+        remainingStock <= 0) {
         showError("Este producto no está disponible.");
         return;
     }
     if (!Number.isInteger(quantity) ||
         quantity < 1 ||
-        quantity > product.stock) {
-        showError(`La cantidad debe estar entre 1 y ${product.stock}.`);
+        quantity > remainingStock) {
+        showError(`Solo podés agregar hasta ${remainingStock} unidad${remainingStock === 1 ? "" : "es"}.`);
         return;
     }
     addToCart(product, quantity);

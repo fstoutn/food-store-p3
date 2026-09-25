@@ -23,6 +23,30 @@ const sortSelect = document.querySelector<HTMLSelectElement>("#sort-select");
 const categoryList = document.querySelector<HTMLElement>(".category-list");
 const sidebar = document.querySelector<HTMLElement>("#sidebar");
 const sidebarToggle = document.querySelector<HTMLButtonElement>("#sidebar-toggle");
+const cartButton = document.querySelector<HTMLButtonElement>("#cart-button");
+const cartBadge = document.querySelector<HTMLSpanElement>("#cart-badge");
+
+function getCartItemCount(): number {
+    const storedCart = localStorage.getItem("food_store_cart");
+
+    if (!storedCart) {
+        return 0;
+    }
+
+    try {
+        const items = JSON.parse(storedCart) as Array<{ quantity: number }>;
+        return items.reduce((total, item) => total + item.quantity, 0);
+    } catch {
+        localStorage.removeItem("food_store_cart");
+        return 0;
+    }
+}
+
+function updateCartBadge(): void {
+    if (cartBadge) {
+        cartBadge.textContent = getCartItemCount().toString();
+    }
+}
 
 const fallbackCategories: ICategoria[] = [
     { id: 1, nombre: "Comidas", descripcion: "Platos principales", imagenUrl: "" },
@@ -89,6 +113,12 @@ logoutButton?.addEventListener("click", () => {
 sidebarToggle?.addEventListener("click", () => {
     sidebar?.classList.toggle("open");
 });
+
+cartButton?.addEventListener("click", () => {
+    window.location.href = "../cart/cart.html";
+});
+
+updateCartBadge();
 
 async function loadCategories(): Promise<void> {
     try {

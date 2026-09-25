@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Food Store - Carrito</title>
+	<link rel="stylesheet" href="../../../style.css">
+</head>
+<body class="store-page">
+	<header class="navbar">
+		<div class="navbar-left">
+			<a href="../home/home.html" class="logo">Food Store</a>
+		</div>
+		<div class="navbar-actions">
+			<a href="./cart.html" class="cart-button" aria-label="Carrito">
+				🛒 <span id="cart-badge" class="cart-badge">0</span>
+			</a>
+			<span id="user-name" class="cart-user-name"></span>
+		</div>
+	</header>
+
+	<main class="cart-page">
+		<div class="cart-heading">
+			<div>
+				<button id="back-to-store" class="back-button" type="button">← Seguir comprando</button>
+				<h1>Tu carrito</h1>
+				<p id="cart-item-count">0 productos</p>
+			</div>
+			<button id="clear-cart" class="btn-danger-outline" type="button">Vaciar carrito</button>
+		</div>
+
+		<p id="cart-message" class="form-error cart-message"></p>
+
+		<div class="cart-layout">
+			<section id="cart-items" class="cart-items" aria-live="polite"></section>
+
+			<aside class="cart-summary">
+				<h2>Resumen del pedido</h2>
+				<div class="summary-row">
+					<span>Subtotal</span>
+					<strong id="cart-subtotal">$0.00</strong>
+				</div>
+				<div class="summary-row">
+					<span>Envío</span>
+					<strong id="cart-shipping">$500.00</strong>
+				</div>
+				<div class="summary-total">
+					<span>Total</span>
+					<strong id="cart-total">$0.00</strong>
+				</div>
+			</aside>
+		</div>
+	</main>
+
+	<script type="module" src="./cart.ts"></script>
+</body>
+</html>
