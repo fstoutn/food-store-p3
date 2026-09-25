@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del producto - Food Store</title>
+    <link rel="stylesheet" href="../../../style.css">
+</head>
+<body class="store-page">
+
+<header class="navbar">
+    <div class="navbar-left">
+        <a href="../home/home.html" class="logo">
+            Food Store
+        </a>
+    </div>
+
+    <div class="navbar-actions">
+        <button
+            id="cart-button"
+            class="cart-button"
+            type="button"
+        >
+            🛒
+            <span id="cart-badge" class="cart-badge">0</span>
+        </button>
+    </div>
+</header>
+
+<main class="product-detail-page">
+
+    <button
+        id="back-button"
+        class="back-button"
+        type="button"
+    >
+        ← Volver a productos
+    </button>
+
+    <section id="product-detail" class="product-detail">
+
+        <div class="product-detail-image-container">
+            <img
+                id="product-image"
+                class="product-detail-image"
+                src=""
+                alt=""
+            >
+        </div>
+
+        <div class="product-detail-info">
+
+            <span
+                id="product-status"
+                class="product-status"
+            ></span>
+
+            <h1 id="product-name"></h1>
+
+            <p
+                id="product-description"
+                class="product-detail-description"
+            ></p>
+
+            <p
+                id="product-price"
+                class="product-detail-price"
+            ></p>
+
+            <p
+                id="product-stock"
+                class="product-stock"
+            ></p>
+
+            <div class="quantity-section">
+
+                <label for="quantity">
+                    Cantidad
+                </label>
+
+                <div class="quantity-control">
+
+                    <button
+                        id="decrease-quantity"
+                        type="button"
+                    >
+                        −
+                    </button>
+
+                    <input
+                        id="quantity"
+                        type="number"
+                        min="1"
+                        value="1"
+                    >
+
+                    <button
+                        id="increase-quantity"
+                        type="button"
+                    >
+                        +
+                    </button>
+
+                </div>
+
+            </div>
+
+            <p
+                id="detail-error"
+                class="form-error"
+            ></p>
+
+            <button
+                id="add-to-cart"
+                class="btn-primary detail-cart-button"
+                type="button"
+            >
+                Agregar al carrito
+            </button>
+
+            <p
+                id="cart-confirmation"
+                class="cart-confirmation"
+            ></p>
+
+        </div>
+
+    </section>
+
+</main>
+
+<script type="module" src="./productDetail.ts"></script>
+</body>
+</html>

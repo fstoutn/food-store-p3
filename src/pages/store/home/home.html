@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Store - Inicio</title>
+    <link rel="stylesheet" href="../../../style.css">
+</head>
+<body class="store-page">
+
+    <header class="navbar">
+        <div class="navbar-left">
+            <button id="sidebar-toggle" class="menu-button" type="button">
+                ☰
+            </button>
+
+            <a href="./home.html" class="logo">
+                Food Store
+            </a>
+        </div>
+
+        <div class="navbar-actions">
+            <button class="cart-button" type="button">
+                🛒
+                <span class="cart-badge">0</span>
+            </button>
+
+            <div class="user-menu">
+                <span id="user-name"></span>
+                <button id="logout-button" class="logout-button" type="button">
+                    Cerrar sesión
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="store-layout">
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h2>Categorías</h2>
+            </div>
+
+            <nav class="category-list">
+                <button class="category-item active" type="button">
+                    Todas
+                </button>
+
+                <button class="category-item" type="button">
+                    Comidas
+                </button>
+
+                <button class="category-item" type="button">
+                    Bebidas
+                </button>
+
+                <button class="category-item" type="button">
+                    Postres
+                </button>
+            </nav>
+        </aside>
+
+        <main class="store-content">
+            <section class="store-header">
+                <div>
+                    <h1>Productos</h1>
+                    <p>Encontrá lo que estás buscando</p>
+                </div>
+
+                <span id="product-count" class="product-count">
+                    0 productos
+                </span>
+            </section>
+
+            <section class="store-controls">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input
+                        type="search"
+                        id="search-input"
+                        placeholder="Buscar productos..."
+                    >
+                </div>
+
+                <select id="sort-select" class="sort-select">
+                    <option value="default">Ordenar por</option>
+                    <option value="name-asc">Nombre A-Z</option>
+                    <option value="name-desc">Nombre Z-A</option>
+                    <option value="price-asc">Precio menor a mayor</option>
+                    <option value="price-desc">Precio mayor a menor</option>
+                </select>
+            </section>
+
+            <section id="product-grid" class="product-grid">
+                <!-- Los productos se cargarán desde la API -->
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="./home.ts"></script>
+</body>
+</html>
