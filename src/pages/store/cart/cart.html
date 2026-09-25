@@ -48,9 +48,47 @@
 					<span>Total</span>
 					<strong id="cart-total">$0.00</strong>
 				</div>
+				<button id="checkout-button" class="btn-primary" type="button">
+					Proceder al pago
+				</button>
 			</aside>
 		</div>
 	</main>
+
+	<div id="checkout-modal" class="modal-backdrop" hidden>
+		<section class="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+			<div class="modal-header">
+				<h2 id="checkout-title">Confirmar pedido</h2>
+				<button id="close-checkout" class="modal-close" type="button" aria-label="Cerrar">×</button>
+			</div>
+
+			<form id="checkout-form">
+				<div class="form-group">
+					<label for="phone">Teléfono *</label>
+					<input id="phone" name="phone" type="tel" required>
+				</div>
+				<div class="form-group">
+					<label for="address">Dirección de entrega *</label>
+					<input id="address" name="address" type="text" required>
+				</div>
+				<div class="form-group">
+					<label for="payment-method">Método de pago *</label>
+					<select id="payment-method" name="payment-method" required>
+						<option value="">Seleccionar método</option>
+						<option value="efectivo">Efectivo</option>
+						<option value="tarjeta">Tarjeta</option>
+						<option value="transferencia">Transferencia</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label for="notes">Notas adicionales</label>
+					<textarea id="notes" name="notes" rows="3"></textarea>
+				</div>
+				<p id="checkout-message" class="form-error"></p>
+				<button class="btn-primary" type="submit">Confirmar pedido</button>
+			</form>
+		</section>
+	</div>
 
 	<script type="module" src="./cart.ts"></script>
 </body>

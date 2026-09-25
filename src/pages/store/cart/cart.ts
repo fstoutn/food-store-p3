@@ -1,7 +1,9 @@
 import type { ICartItem } from "../../../types/ICart.js";
+import { apiRequest } from "../../../utils/api.js";
 import { requireRole } from "../../../utils/auth.js";
 
 const CART_KEY = "food_store_cart";
+const ORDERS_KEY = "food_store_orders";
 const SHIPPING_COST = 500;
 
 const user = requireRole("cliente");
@@ -12,6 +14,18 @@ const cartSubtotal = document.querySelector<HTMLElement>("#cart-subtotal");
 const cartShipping = document.querySelector<HTMLElement>("#cart-shipping");
 const cartTotal = document.querySelector<HTMLElement>("#cart-total");
 const cartMessage = document.querySelector<HTMLElement>("#cart-message");
+const clearCartButton = document.querySelector<HTMLButtonElement>("#clear-cart");
+const checkoutButton = document.querySelector<HTMLButtonElement>("#checkout-button");
+const checkoutModal = document.querySelector<HTMLDivElement>("#checkout-modal");
+const checkoutForm = document.querySelector<HTMLFormElement>("#checkout-form");
+const checkoutMessage = document.querySelector<HTMLElement>("#checkout-message");
+
+interface CheckoutData {
+    telefono: string;
+    direccion: string;
+    metodoPago: string;
+    notas: string;
+}
 
 function formatPrice(value: number): string {
     return `$${value.toFixed(2)}`;
@@ -19,12 +33,14 @@ function formatPrice(value: number): string {
 
 function showMessage(message: string): void {
     if (cartMessage) {
+        cartMessage.classList.remove("cart-success");
         cartMessage.textContent = message;
     }
 }
 
 function clearMessage(): void {
     if (cartMessage) {
+        cartMessage.classList.remove("cart-success");
         cartMessage.textContent = "";
     }
 }
@@ -51,6 +67,12 @@ function updateSummary(items: ICartItem[]): void {
     }
     if (cartTotal) {
         cartTotal.textContent = formatPrice(subtotal + shipping);
+    }
+    if (checkoutButton) {
+        checkoutButton.disabled = items.length === 0;
+    }
+    if (clearCartButton) {
+        clearCartButton.hidden = items.length === 0;
     }
 }
 
@@ -151,6 +173,127 @@ document.querySelector<HTMLButtonElement>("#clear-cart")?.addEventListener("clic
         clearCart();
         renderCart();
     }
+});
+
+function openCheckout(): void {
+    if (getCart().length === 0 || !checkoutModal) {
+        return;
+    }
+
+    if (checkoutMessage) {
+        checkoutMessage.textContent = "";
+    }
+    checkoutModal.hidden = false;
+}
+
+function closeCheckout(): void {
+    if (checkoutModal) {
+        checkoutModal.hidden = true;
+    }
+}
+
+function readCheckoutData(): CheckoutData {
+    const formData = new FormData(checkoutForm!);
+
+    return {
+        telefono: String(formData.get("phone") ?? "").trim(),
+        direccion: String(formData.get("address") ?? "").trim(),
+        metodoPago: String(formData.get("payment-method") ?? ""),
+        notas: String(formData.get("notes") ?? "").trim()
+    };
+}
+
+function saveLocalOrder(data: CheckoutData, items: ICartItem[]): void {
+    const subtotal = items.reduce(
+        (total, item) => total + item.product.precio * item.quantity,
+        0
+    );
+    const storedOrders = localStorage.getItem(ORDERS_KEY);
+    const orders = storedOrders
+        ? JSON.parse(storedOrders) as unknown[]
+        : [];
+
+    orders.unshift({
+        id: `local-${Date.now()}`,
+        clienteId: user.id,
+        fecha: new Date().toISOString(),
+        estado: "pending",
+        items,
+        telefono: data.telefono,
+        direccion: data.direccion,
+        metodoPago: data.metodoPago,
+        notas: data.notas,
+        subtotal,
+        costoEnvio: SHIPPING_COST,
+        total: subtotal + SHIPPING_COST
+    });
+
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+}
+
+async function submitOrder(data: CheckoutData): Promise<void> {
+    const items = getCart();
+    const subtotal = items.reduce(
+        (total, item) => total + item.product.precio * item.quantity,
+        0
+    );
+    const payload = {
+        clienteId: user.id,
+        telefono: data.telefono,
+        direccion: data.direccion,
+        metodoPago: data.metodoPago,
+        notas: data.notas,
+        items: items.map((item) => ({
+            productoId: item.product.id,
+            cantidad: item.quantity
+        })),
+        subtotal,
+        costoEnvio: SHIPPING_COST,
+        total: subtotal + SHIPPING_COST
+    };
+
+    try {
+        await apiRequest("/pedidos", {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        console.warn("No hay backend de pedidos, guardando el pedido localmente.", error);
+        saveLocalOrder(data, items);
+    }
+
+    clearCart();
+    closeCheckout();
+    renderCart();
+    showMessage("Pedido confirmado. El carrito fue vaciado correctamente.");
+    if (cartMessage) {
+        cartMessage.classList.add("cart-success");
+    }
+}
+
+checkoutButton?.addEventListener("click", openCheckout);
+document.querySelector<HTMLButtonElement>("#close-checkout")?.addEventListener("click", closeCheckout);
+checkoutModal?.addEventListener("click", (event) => {
+    if (event.target === checkoutModal) {
+        closeCheckout();
+    }
+});
+
+checkoutForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = readCheckoutData();
+
+    if (!data.telefono || !data.direccion || !data.metodoPago) {
+        if (checkoutMessage) {
+            checkoutMessage.textContent = "Completá teléfono, dirección y método de pago.";
+        }
+        return;
+    }
+
+    if (checkoutMessage) {
+        checkoutMessage.textContent = "Procesando pedido...";
+    }
+    await submitOrder(data);
 });
 
 renderCart();

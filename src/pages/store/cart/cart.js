@@ -1,5 +1,7 @@
+import { apiRequest } from "../../../utils/api.js";
 import { requireRole } from "../../../utils/auth.js";
 const CART_KEY = "food_store_cart";
+const ORDERS_KEY = "food_store_orders";
 const SHIPPING_COST = 500;
 const user = requireRole("cliente");
 const cartItems = document.querySelector("#cart-items");
@@ -9,16 +11,23 @@ const cartSubtotal = document.querySelector("#cart-subtotal");
 const cartShipping = document.querySelector("#cart-shipping");
 const cartTotal = document.querySelector("#cart-total");
 const cartMessage = document.querySelector("#cart-message");
+const clearCartButton = document.querySelector("#clear-cart");
+const checkoutButton = document.querySelector("#checkout-button");
+const checkoutModal = document.querySelector("#checkout-modal");
+const checkoutForm = document.querySelector("#checkout-form");
+const checkoutMessage = document.querySelector("#checkout-message");
 function formatPrice(value) {
     return `$${value.toFixed(2)}`;
 }
 function showMessage(message) {
     if (cartMessage) {
+        cartMessage.classList.remove("cart-success");
         cartMessage.textContent = message;
     }
 }
 function clearMessage() {
     if (cartMessage) {
+        cartMessage.classList.remove("cart-success");
         cartMessage.textContent = "";
     }
 }
@@ -40,6 +49,12 @@ function updateSummary(items) {
     }
     if (cartTotal) {
         cartTotal.textContent = formatPrice(subtotal + shipping);
+    }
+    if (checkoutButton) {
+        checkoutButton.disabled = items.length === 0;
+    }
+    if (clearCartButton) {
+        clearCartButton.hidden = items.length === 0;
     }
 }
 function renderCart() {
@@ -128,6 +143,107 @@ document.querySelector("#clear-cart")?.addEventListener("click", () => {
         clearCart();
         renderCart();
     }
+});
+function openCheckout() {
+    if (getCart().length === 0 || !checkoutModal) {
+        return;
+    }
+    if (checkoutMessage) {
+        checkoutMessage.textContent = "";
+    }
+    checkoutModal.hidden = false;
+}
+function closeCheckout() {
+    if (checkoutModal) {
+        checkoutModal.hidden = true;
+    }
+}
+function readCheckoutData() {
+    const formData = new FormData(checkoutForm);
+    return {
+        telefono: String(formData.get("phone") ?? "").trim(),
+        direccion: String(formData.get("address") ?? "").trim(),
+        metodoPago: String(formData.get("payment-method") ?? ""),
+        notas: String(formData.get("notes") ?? "").trim()
+    };
+}
+function saveLocalOrder(data, items) {
+    const subtotal = items.reduce((total, item) => total + item.product.precio * item.quantity, 0);
+    const storedOrders = localStorage.getItem(ORDERS_KEY);
+    const orders = storedOrders
+        ? JSON.parse(storedOrders)
+        : [];
+    orders.unshift({
+        id: `local-${Date.now()}`,
+        clienteId: user.id,
+        fecha: new Date().toISOString(),
+        estado: "pending",
+        items,
+        telefono: data.telefono,
+        direccion: data.direccion,
+        metodoPago: data.metodoPago,
+        notas: data.notas,
+        subtotal,
+        costoEnvio: SHIPPING_COST,
+        total: subtotal + SHIPPING_COST
+    });
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+}
+async function submitOrder(data) {
+    const items = getCart();
+    const subtotal = items.reduce((total, item) => total + item.product.precio * item.quantity, 0);
+    const payload = {
+        clienteId: user.id,
+        telefono: data.telefono,
+        direccion: data.direccion,
+        metodoPago: data.metodoPago,
+        notas: data.notas,
+        items: items.map((item) => ({
+            productoId: item.product.id,
+            cantidad: item.quantity
+        })),
+        subtotal,
+        costoEnvio: SHIPPING_COST,
+        total: subtotal + SHIPPING_COST
+    };
+    try {
+        await apiRequest("/pedidos", {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+    }
+    catch (error) {
+        console.warn("No hay backend de pedidos, guardando el pedido localmente.", error);
+        saveLocalOrder(data, items);
+    }
+    clearCart();
+    closeCheckout();
+    renderCart();
+    showMessage("Pedido confirmado. El carrito fue vaciado correctamente.");
+    if (cartMessage) {
+        cartMessage.classList.add("cart-success");
+    }
+}
+checkoutButton?.addEventListener("click", openCheckout);
+document.querySelector("#close-checkout")?.addEventListener("click", closeCheckout);
+checkoutModal?.addEventListener("click", (event) => {
+    if (event.target === checkoutModal) {
+        closeCheckout();
+    }
+});
+checkoutForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = readCheckoutData();
+    if (!data.telefono || !data.direccion || !data.metodoPago) {
+        if (checkoutMessage) {
+            checkoutMessage.textContent = "Completá teléfono, dirección y método de pago.";
+        }
+        return;
+    }
+    if (checkoutMessage) {
+        checkoutMessage.textContent = "Procesando pedido...";
+    }
+    await submitOrder(data);
 });
 renderCart();
 export function getCart() {
